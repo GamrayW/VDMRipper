@@ -85,6 +85,7 @@ with open(args.filename, 'rb') as f:
             sys.exit(1)
         
         if filter_type != 0 and sig_type != filter_type:
+            offset += len(header + value_data)
             continue
         if sig_type == 0x5C:
             current_color = Fore.GREEN

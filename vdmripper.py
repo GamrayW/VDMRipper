@@ -18,7 +18,7 @@ parser.add_argument(
             '-e',
             '--extract',
             required=True,
-            choices=["lua"],
+            choices=["lua", "vfs"],
             help="Extract files"
     )
 parser.add_argument(
@@ -43,18 +43,18 @@ os.makedirs(args.output, exist_ok=True)
 current_threat = ""
 count = 0
 unknown_threat_count = 0
-with open(args.filename, "rb") as f:
+with open(args.filename, "rb") as vdm_file:
     while True:
-        header = f.read(4)
+        header = vdm_file.read(4)
         if len(header) < 4:
-            sys.exit(0) 
+            break
         
         sig_type = header[0]
         size_low = header[1]
         size_high = int.from_bytes(header[2:4], byteorder='little')
         sig_size = size_low | (size_high << 8)
         
-        value_data = f.read(sig_size)
+        value_data = vdm_file.read(sig_size)
         if len(value_data) < sig_size:
             print(f"Warning: Expected {sig_size} bytes but got {len(value_data)}")
             sys.exit(1)
@@ -84,7 +84,28 @@ with open(args.filename, "rb") as f:
 
             count += 1
             print(f"Ripped {hashed} (total {count})", end="\r")
-            
-print("\nDone")
+
+        if args.extract == "vfs" and sig_type == SIG_TYPES["SIGNATURE_TYPE_VFILE"]:
+            data_stream = io.BytesIO(value_data)
+            offset_to_filename = int.from_bytes(data_stream.read(4), byteorder='little')
+            metadata = data_stream.read(offset_to_filename - 4)  # we leave room to retrieve file size
+            file_size = int.from_bytes(data_stream.read(4), byteorder='little')
+            unknown = data_stream.read(8)
+            filename = data_stream.read(0x224).decode("utf-16-le").split('\x00')[0]
+            file_content = data_stream.read(file_size)
+            if len(file_content) != file_size:
+                print(f"Fatal missmatch, expected {file_size} bytes but only got {len(file_content)}")
+                quit()
+
+            filename_unix = filename.replace("\\\\", '/').replace("\\", '/').replace(':', '')
+            full_path = os.path.join(args.output, filename_unix)
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "wb") as out_vfile:
+                out_vfile.write(file_content)
+
+            count += 1
+            print(f"Ripped {os.path.basename(full_path)} (total: {count}) {' '*20}", end=f"\r")
+
+print(f"\nDone, ripped a total of {count} files")
         
         
