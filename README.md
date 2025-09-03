@@ -29,7 +29,14 @@ $ python3 vmdviewer.py mpasbase.extracted -f SIGNATURE_TYPE_VFILE
 
 ## vdmripper
 
-Extract files from the VDM, **for now, only extraction of ASR LUA files is supported**
+Extract files from the VDM, **for now, only extraction of ASR LUA files and Virtual FS is supported**
+
+```
+python3 vdmripper.py mpasbase.extracted -e vfs
+```
+This extractd about 128 files from the virtual file system used during the emulation. I noticed that some known files used for evasion bypass are not present anymore (`aaa_TouchMeNot_.txt` for example)
+
+![](./img/vfs.png)
 
 ```
 python3 vdmripper.py mpasbase.extracted -e lua
