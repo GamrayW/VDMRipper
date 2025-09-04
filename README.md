@@ -50,4 +50,4 @@ This extracts 52k (at the time of writing the tool) Lua files used for the defen
 		/<md5hash>.meta
 ```
 
-The extraction of the mplua files is completed with the tool made by [Commial](https://github.com/commial/experiments/tree/master/windows-defender/lua) during his research on the topic that fixes the header of the file to make it readable by [luadec](https://github.com/viruscamp/luadec). I might add luadec in this tool later in order to decompile all of the scripts at once.
+The extraction of the mplua files is completed with the tool made by [Commial](https://github.com/commial/experiments/tree/master/windows-defender/lua) during his research on the topic that fixes the header of the file to make it readable by [luadec](https://github.com/viruscamp/luadec). You can automatically decompile the lua files by specifying the path of the luadec executable with `--luadec /path/to/binary`
