@@ -5,6 +5,7 @@ import sys
 import json
 import hashlib
 import argparse
+import subprocess
 
 from mplua_parse import commial_parse
 
@@ -26,6 +27,11 @@ parser.add_argument(
             '--output',
             default="output",
             help="Output directory"
+    )
+
+parser.add_argument(
+            '--luadec',
+            help="Luadec binary path to decompile luac files (use -e lua)"
     )
 
 args = parser.parse_args()
@@ -82,13 +88,24 @@ with open(args.filename, "rb") as vdm_file:
             with open(metadata_filename, "wb") as out_metadata:
                 out_metadata.write(metadata)
 
+
+            if args.luadec is not None:
+                decompiled_file = luac_filename.replace('.luac', '.lua')
+                outfile = open(decompiled_file, "w")
+                subprocess.run([args.luadec, luac_filename], 
+                                stdout=outfile, stderr=subprocess.DEVNULL)
+                outfile.close()
+                # Sometimes the file is not found
+                if os.path.exists(luac_filename):
+                    os.remove(luac_filename)
+
             count += 1
             print(f"Ripped {hashed} (total {count})", end="\r")
 
         if args.extract == "vfs" and sig_type == SIG_TYPES["SIGNATURE_TYPE_VFILE"]:
             data_stream = io.BytesIO(value_data)
             offset_to_filename = int.from_bytes(data_stream.read(4), byteorder='little')
-            metadata = data_stream.read(offset_to_filename - 4)  # we leave room to retrieve file size
+            time_data = data_stream.read(offset_to_filename - 4)  # we leave room to retrieve file size
             file_size = int.from_bytes(data_stream.read(4), byteorder='little')
             unknown = data_stream.read(8)
             filename = data_stream.read(0x224).decode("utf-16-le").split('\x00')[0]
