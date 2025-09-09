@@ -123,7 +123,7 @@ with open(args.filename, "rb") as vdm_file:
             full_path = os.path.join(args.output, filename_unix)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, "wb") as out_vfile:
-                out_vfile.write(file_content + "\n")
+                out_vfile.write(file_content)
 
             count += 1
             print(f"Ripped {os.path.basename(full_path)} (total: {count}) {' '*20}", end=f"\r")
