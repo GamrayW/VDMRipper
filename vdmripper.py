@@ -19,7 +19,7 @@ parser.add_argument(
             '-e',
             '--extract',
             required=True,
-            choices=["lua", "vfs"],
+            choices=["lua", "vfs", "friendly_files"],
             help="Extract files"
     )
 parser.add_argument(
@@ -43,6 +43,11 @@ if not os.path.isfile(args.filename):
 SIG_TYPES = {}
 with open("sig_types.json", "r") as f:
     SIG_TYPES = json.load(f)
+
+FRIENDLIES = [
+    SIG_TYPES["SIGNATURE_TYPE_FRIENDLYFILE_SHA256"], 
+    SIG_TYPES["SIGNATURE_TYPE_FRIENDLYFILE_SHA512"]
+    ]
 
 os.makedirs(args.output, exist_ok=True)
 
@@ -118,10 +123,20 @@ with open(args.filename, "rb") as vdm_file:
             full_path = os.path.join(args.output, filename_unix)
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, "wb") as out_vfile:
-                out_vfile.write(file_content)
+                out_vfile.write(file_content + "\n")
 
             count += 1
             print(f"Ripped {os.path.basename(full_path)} (total: {count}) {' '*20}", end=f"\r")
+
+        if args.extract == "friendly_files":
+            if sig_type in FRIENDLIES:
+                ext = [".sha256", ".sha512"][FRIENDLIES.index(sig_type)]  # hacky, do better
+                path = os.path.join(args.output, threat_name.replace('/', '-') + ext)
+                with open(path, "a") as friend_file:
+                    friend_file.write(value_data.hex() + '\n')
+
+                count += 1
+                print(f"Ripped signature {value_data.hex()} (total: {count}) {' '*20}", end="\r")
 
 print(f"\nDone, ripped a total of {count} files")
         
